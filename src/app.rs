@@ -14,11 +14,12 @@ pub(crate) struct AnnealApp {
 const AREA_WIDTH: f32 = 500.0;
 const AREA_HEIGHT: f32 = 500.0;
 const OFFSET: Vec2 = Vec2::new(10.0, 10.0);
+const TICKS_PER_UPDATE: usize = 10;
 
 impl AnnealApp {
     pub fn new() -> Self {
         let mut cities = vec![];
-        for _ in 0..20 {
+        for _ in 0..100 {
             cities.push(Vec2::new(
                 rand::random::<f32>() * AREA_WIDTH,
                 rand::random::<f32>() * AREA_HEIGHT,
@@ -29,7 +30,7 @@ impl AnnealApp {
             cities,
             visit_order,
             attempts: 0,
-            temperature: 1000.0,
+            temperature: 100.0,
             record: HashMap::new(),
         }
     }
@@ -58,7 +59,7 @@ impl AnnealApp {
         }
 
         self.attempts += 1;
-        self.temperature *= 0.999;
+        self.temperature *= 0.9999;
     }
 
     fn total_distance(&self) -> f64 {
@@ -109,7 +110,10 @@ Total distance: {}"#,
 impl eframe::App for AnnealApp {
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         ctx.request_repaint_after(std::time::Duration::from_millis(20));
-        self.tick();
+
+        for _ in 0..TICKS_PER_UPDATE {
+            self.tick();
+        }
 
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
             Frame::canvas(ui.style()).show(ui, |ui| {
