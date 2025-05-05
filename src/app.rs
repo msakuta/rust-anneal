@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use eframe::egui::{self, Align2, Color32, FontId, Frame, Ui, Vec2, pos2};
-use statrs::function::gamma::gamma;
+use egui_plot::{Legend, Line, PlotPoints};
 
 pub(crate) struct AnnealApp {
     cities: Vec<Vec2>,
@@ -11,14 +9,17 @@ pub(crate) struct AnnealApp {
     temperature: f64,
     starting_temperature: f64,
     cooling_rate: f64,
-    record: HashMap<Vec<usize>, f64>,
+    record: Vec<f64>,
     paused: bool,
     iter_per_frame: usize,
 }
 
-const AREA_WIDTH: f32 = 500.0;
-const AREA_HEIGHT: f32 = 500.0;
-const OFFSET: Vec2 = Vec2::new(10.0, 10.0);
+pub(crate) const AREA_WIDTH: f32 = 500.0;
+pub(crate) const AREA_HEIGHT: f32 = 500.0;
+pub(crate) const AREA_MARGIN: f32 = 10.0;
+pub(crate) const SIDE_PANEL_WIDTH: f32 = 300.;
+pub(crate) const BOTTOM_PLOT_HEIGHT: f32 = 150.;
+const OFFSET: Vec2 = Vec2::new(AREA_MARGIN, AREA_MARGIN * 2.0);
 
 impl AnnealApp {
     pub fn new() -> Self {
@@ -39,7 +40,7 @@ impl AnnealApp {
             temperature: 100.0,
             starting_temperature: 100.,
             cooling_rate: 0.0001,
-            record: HashMap::new(),
+            record: vec![],
             paused: false,
             iter_per_frame: 10,
         }
@@ -65,7 +66,7 @@ impl AnnealApp {
         if !swap {
             self.visit_order.swap(idx, idx2);
         } else {
-            self.record.insert(self.visit_order.clone(), after_distance);
+            self.record.push(after_distance);
         }
 
         self.iter += 1;
@@ -99,14 +100,13 @@ impl AnnealApp {
         let total_distance = self.total_distance();
 
         let attempts = self.iter;
-        let percentage = (self.record.len() as f64 / gamma(self.cities.len() as f64)) * 100.0;
         let temperature = self.temperature;
 
         painter.text(
             pos2(10., AREA_HEIGHT),
             Align2::LEFT_TOP,
             format!(
-                r#"Attempts: {attempts}, {percentage}% of total solution space
+                r#"Attempts: {attempts}
 Temperature: {temperature}
 Total distance: {}"#,
                 total_distance
@@ -143,13 +143,19 @@ Total distance: {}"#,
         ui.horizontal(|ui| {
             ui.label("Starting temperature:");
             const MAX_TEMPERATURE: f64 = 1000.;
-            ui.add(egui::Slider::new(&mut self.starting_temperature, (0.)..=MAX_TEMPERATURE));
+            ui.add(egui::Slider::new(
+                &mut self.starting_temperature,
+                (0.)..=MAX_TEMPERATURE,
+            ));
         });
-        
+
         ui.horizontal(|ui| {
             ui.label("Cooling rate:");
             const MAX_COOLING_RATE: f64 = 0.05;
-            ui.add(egui::Slider::new(&mut self.cooling_rate, (0.)..=MAX_COOLING_RATE));
+            ui.add(egui::Slider::new(
+                &mut self.cooling_rate,
+                (0.)..=MAX_COOLING_RATE,
+            ));
         });
     }
 
@@ -180,7 +186,7 @@ impl eframe::App for AnnealApp {
         }
 
         eframe::egui::SidePanel::right("side_panel")
-            .min_width(200.)
+            .min_width(SIDE_PANEL_WIDTH)
             .show(ctx, |ui| self.ui_panel(ui));
 
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
@@ -188,5 +194,25 @@ impl eframe::App for AnnealApp {
                 self.render(ui);
             });
         });
+
+        egui::TopBottomPanel::bottom("weight_plot")
+            .resizable(true)
+            .min_height(BOTTOM_PLOT_HEIGHT)
+            .default_height(BOTTOM_PLOT_HEIGHT)
+            .show(ctx, |ui| {
+                let plot = egui_plot::Plot::new("plot");
+                plot.legend(Legend::default()).show(ui, |plot_ui| {
+                    let points: PlotPoints = self
+                        .record
+                        .iter()
+                        .enumerate()
+                        .map(|(t, v)| [t as f64, *v])
+                        .collect();
+                    let line = Line::new("Total distance", points).color(
+                        eframe::egui::Color32::from_rgb((200) as u8, (200) as u8, (100) as u8),
+                    );
+                    plot_ui.line(line);
+                });
+            });
     }
 }

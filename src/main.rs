@@ -1,13 +1,13 @@
 mod app;
 
-use app::AnnealApp;
+use app::{AREA_HEIGHT, AREA_MARGIN, AREA_WIDTH, AnnealApp, BOTTOM_PLOT_HEIGHT, SIDE_PANEL_WIDTH};
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
-    // native_options.initial_window_size = Some(vec2(
-    //     (BOARD_SIZE * CELL_SIZE + 16) as f32,
-    //     (BOARD_SIZE * CELL_SIZE + 16) as f32,
-    // ));
+    let mut native_options = eframe::NativeOptions::default();
+    native_options.viewport = native_options.viewport.with_inner_size((
+        (AREA_WIDTH + AREA_MARGIN * 2. + SIDE_PANEL_WIDTH) as f32,
+        (AREA_HEIGHT + AREA_MARGIN * 2. + BOTTOM_PLOT_HEIGHT) as f32,
+    ));
 
     eframe::run_native(
         "rust-anneal",
