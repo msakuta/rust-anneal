@@ -96,24 +96,6 @@ impl AnnealApp {
             .map(|idx| self.cities[*idx].to_pos2() + OFFSET)
             .collect::<Vec<_>>();
         painter.line(points, (2., Color32::from_rgb(255, 0, 0)));
-
-        let total_distance = self.total_distance();
-
-        let attempts = self.iter;
-        let temperature = self.temperature;
-
-        painter.text(
-            pos2(10., AREA_HEIGHT),
-            Align2::LEFT_TOP,
-            format!(
-                r#"Attempts: {attempts}
-Temperature: {temperature}
-Total distance: {}"#,
-                total_distance
-            ),
-            FontId::proportional(16.),
-            Color32::BLACK,
-        );
     }
 
     fn ui_panel(&mut self, ui: &mut Ui) {
@@ -127,6 +109,10 @@ Total distance: {}"#,
                 self.paused = !self.paused;
             }
         });
+
+        ui.label(format!("Iter: {}", self.iter));
+        ui.label(format!("Temperature: {:.3}", self.temperature));
+        ui.label(format!("Total distance: {:.3}", self.total_distance()));
 
         ui.horizontal(|ui| {
             ui.label("Number of cities:");
