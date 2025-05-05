@@ -9,6 +9,7 @@ pub(crate) struct AnnealApp {
     attempts: usize,
     temperature: f64,
     record: HashMap<Vec<usize>, f64>,
+    paused: bool,
 }
 
 const AREA_WIDTH: f32 = 500.0;
@@ -32,6 +33,7 @@ impl AnnealApp {
             attempts: 0,
             temperature: 100.0,
             record: HashMap::new(),
+            paused: false,
         }
     }
 
@@ -105,15 +107,49 @@ Total distance: {}"#,
             Color32::BLACK,
         );
     }
+
+    fn ui_panel(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("Reset").clicked() {
+                self.reset();
+            }
+
+            let paused_label = if self.paused { "Unpause" } else { "Pause" };
+            if ui.button(paused_label).clicked() {
+                self.paused = !self.paused;
+            }
+        });
+    }
+
+    fn reset(&mut self) {
+        let mut cities = vec![];
+        for _ in 0..100 {
+            cities.push(Vec2::new(
+                rand::random::<f32>() * AREA_WIDTH,
+                rand::random::<f32>() * AREA_HEIGHT,
+            ));
+        }
+        let visit_order = (0..cities.len()).collect();
+        self.cities = cities;
+        self.visit_order = visit_order;
+        self.temperature = 1000.;
+        self.attempts = 0;
+        self.record.clear();
+    }
 }
 
 impl eframe::App for AnnealApp {
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
-        ctx.request_repaint_after(std::time::Duration::from_millis(20));
-
-        for _ in 0..TICKS_PER_UPDATE {
-            self.tick();
+        if !self.paused {
+            ctx.request_repaint_after(std::time::Duration::from_millis(20));
+            for _ in 0..TICKS_PER_UPDATE {
+                self.tick();
+            }
         }
+
+        eframe::egui::SidePanel::right("side_panel")
+            .min_width(200.)
+            .show(ctx, |ui| self.ui_panel(ui));
 
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
             Frame::canvas(ui.style()).show(ui, |ui| {
