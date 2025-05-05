@@ -1,4 +1,4 @@
-use eframe::egui::{self, Align2, Color32, FontId, Frame, Ui, Vec2, pos2};
+use eframe::egui::{self, Color32, Frame, Ui, Vec2};
 use egui_plot::{Legend, Line, PlotPoints};
 
 pub(crate) struct AnnealApp {
