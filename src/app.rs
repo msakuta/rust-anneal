@@ -1,26 +1,30 @@
 use std::collections::HashMap;
 
-use eframe::egui::{Align2, Color32, FontId, Frame, Ui, Vec2, pos2};
+use eframe::egui::{self, Align2, Color32, FontId, Frame, Ui, Vec2, pos2};
 use statrs::function::gamma::gamma;
 
 pub(crate) struct AnnealApp {
     cities: Vec<Vec2>,
     visit_order: Vec<usize>,
-    attempts: usize,
+    iter: usize,
+    num_cities: usize,
     temperature: f64,
+    starting_temperature: f64,
+    cooling_rate: f64,
     record: HashMap<Vec<usize>, f64>,
     paused: bool,
+    iter_per_frame: usize,
 }
 
 const AREA_WIDTH: f32 = 500.0;
 const AREA_HEIGHT: f32 = 500.0;
 const OFFSET: Vec2 = Vec2::new(10.0, 10.0);
-const TICKS_PER_UPDATE: usize = 10;
 
 impl AnnealApp {
     pub fn new() -> Self {
+        let num_cities = 100;
         let mut cities = vec![];
-        for _ in 0..100 {
+        for _ in 0..num_cities {
             cities.push(Vec2::new(
                 rand::random::<f32>() * AREA_WIDTH,
                 rand::random::<f32>() * AREA_HEIGHT,
@@ -30,10 +34,14 @@ impl AnnealApp {
         Self {
             cities,
             visit_order,
-            attempts: 0,
+            iter: 0,
+            num_cities,
             temperature: 100.0,
+            starting_temperature: 100.,
+            cooling_rate: 0.0001,
             record: HashMap::new(),
             paused: false,
+            iter_per_frame: 10,
         }
     }
 
@@ -60,8 +68,8 @@ impl AnnealApp {
             self.record.insert(self.visit_order.clone(), after_distance);
         }
 
-        self.attempts += 1;
-        self.temperature *= 0.9999;
+        self.iter += 1;
+        self.temperature *= 1. - self.cooling_rate;
     }
 
     fn total_distance(&self) -> f64 {
@@ -90,7 +98,7 @@ impl AnnealApp {
 
         let total_distance = self.total_distance();
 
-        let attempts = self.attempts;
+        let attempts = self.iter;
         let percentage = (self.record.len() as f64 / gamma(self.cities.len() as f64)) * 100.0;
         let temperature = self.temperature;
 
@@ -119,21 +127,45 @@ Total distance: {}"#,
                 self.paused = !self.paused;
             }
         });
+
+        ui.horizontal(|ui| {
+            ui.label("Number of cities:");
+            const MAX_CITIES: usize = 1000;
+            ui.add(egui::Slider::new(&mut self.num_cities, 2..=MAX_CITIES));
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("Iterations per frame:");
+            const MAX_BATCHES: usize = 50;
+            ui.add(egui::Slider::new(&mut self.iter_per_frame, 1..=MAX_BATCHES));
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("Starting temperature:");
+            const MAX_TEMPERATURE: f64 = 1000.;
+            ui.add(egui::Slider::new(&mut self.starting_temperature, (0.)..=MAX_TEMPERATURE));
+        });
+        
+        ui.horizontal(|ui| {
+            ui.label("Cooling rate:");
+            const MAX_COOLING_RATE: f64 = 0.05;
+            ui.add(egui::Slider::new(&mut self.cooling_rate, (0.)..=MAX_COOLING_RATE));
+        });
     }
 
     fn reset(&mut self) {
         let mut cities = vec![];
-        for _ in 0..100 {
+        for _ in 0..self.num_cities {
             cities.push(Vec2::new(
                 rand::random::<f32>() * AREA_WIDTH,
                 rand::random::<f32>() * AREA_HEIGHT,
             ));
         }
-        let visit_order = (0..cities.len()).collect();
+        let visit_order = (0..self.num_cities).collect();
         self.cities = cities;
         self.visit_order = visit_order;
-        self.temperature = 1000.;
-        self.attempts = 0;
+        self.temperature = self.starting_temperature;
+        self.iter = 0;
         self.record.clear();
     }
 }
@@ -142,7 +174,7 @@ impl eframe::App for AnnealApp {
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         if !self.paused {
             ctx.request_repaint_after(std::time::Duration::from_millis(20));
-            for _ in 0..TICKS_PER_UPDATE {
+            for _ in 0..self.iter_per_frame {
                 self.tick();
             }
         }
