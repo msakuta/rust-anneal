@@ -1,6 +1,6 @@
 # Rust-anneal
 
-A simulated annealing demo program to heuristically solve TSP in Rust
+A simulated annealing demo program to heuristically solve [TSP](https://en.wikipedia.org/wiki/Travelling_salesman_problem) in Rust
 
 I'm pretty sure there are hundreds of people already done this in Rust.
 However, I just wanted to make an easy to use GUI application to see it in action.
