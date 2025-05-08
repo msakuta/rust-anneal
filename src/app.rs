@@ -194,9 +194,8 @@ impl eframe::App for AnnealApp {
                         .enumerate()
                         .map(|(t, v)| [t as f64, *v])
                         .collect();
-                    let line = Line::new("Total distance", points).color(
-                        eframe::egui::Color32::from_rgb((200) as u8, (200) as u8, (100) as u8),
-                    );
+                    let line = Line::new("Total distance", points)
+                        .color(eframe::egui::Color32::from_rgb(200, 200, 100));
                     plot_ui.line(line);
                 });
             });

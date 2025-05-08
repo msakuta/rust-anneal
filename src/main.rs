@@ -5,8 +5,8 @@ use app::{AREA_HEIGHT, AREA_MARGIN, AREA_WIDTH, AnnealApp, BOTTOM_PLOT_HEIGHT, S
 fn main() {
     let mut native_options = eframe::NativeOptions::default();
     native_options.viewport = native_options.viewport.with_inner_size((
-        (AREA_WIDTH + AREA_MARGIN * 2. + SIDE_PANEL_WIDTH) as f32,
-        (AREA_HEIGHT + AREA_MARGIN * 2. + BOTTOM_PLOT_HEIGHT) as f32,
+        AREA_WIDTH + AREA_MARGIN * 2. + SIDE_PANEL_WIDTH,
+        AREA_HEIGHT + AREA_MARGIN * 2. + BOTTOM_PLOT_HEIGHT,
     ));
 
     eframe::run_native(
