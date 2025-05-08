@@ -9,6 +9,10 @@ We use eframe to render the graphics.
 
 ![screenshot](images/screenshot.png)
 
+Video:
+
+https://github.com/user-attachments/assets/c9b4220b-580e-4536-b475-2b75d820e02d
+
 ## How to run
 
 * Install Rust.
